@@ -1,0 +1,110 @@
+DEAD MAN'S SWITCH API - DETAILED ENDPOINT LIST
+
+1. GENERAL
+- GET /api/status
+  Deskripsi: Cek status API.
+  Auth: No
+  Body: None
+
+2. AUTHENTICATION (/api/auth)
+- POST /api/auth/register
+  Deskripsi: Registrasi user baru.
+  Auth: No
+  Body (JSON): { "username": "string", "email": "string", "password": "min 8 chars" }
+
+- POST /api/auth/login
+  Deskripsi: Login untuk mendapatkan token.
+  Auth: No
+  Body (JSON): { "email": "string", "password": "string" }
+
+- GET /api/auth/me
+  Deskripsi: Ambil profil user yang sedang login.
+  Auth: Bearer Token
+  Body: None
+
+3. SWITCH MANAGEMENT (/api/switch)
+- POST /api/switch
+  Deskripsi: Membuat switch baru.
+  Auth: Bearer Token
+  Body (JSON): { "name": "string", "checkin_interval": integer (minutes), "grace_period": integer (minutes) }
+
+- GET /api/switch
+  Deskripsi: List semua switch milik user.
+  Auth: Bearer Token
+  Body: None
+
+- GET /api/switch/<id>
+  Deskripsi: Detail switch tertentu.
+  Auth: Bearer Token
+  Body: None
+
+- PUT /api/switch/<id>
+  Deskripsi: Update konfigurasi switch.
+  Auth: Bearer Token
+  Body (JSON): { "name": "string", "checkin_interval": integer, "grace_period": integer }
+
+- DELETE /api/switch/<id>
+  Deskripsi: Hapus switch.
+  Auth: Bearer Token
+  Body: None
+
+- POST /api/switch/<id>/arm
+  Deskripsi: Mengaktifkan timer switch.
+  Auth: Bearer Token
+  Body: None
+
+- POST /api/switch/<id>/disarm
+  Deskripsi: Mematikan timer switch.
+  Auth: Bearer Token
+  Body: None
+
+- POST /api/switch/<id>/checkin
+  Deskripsi: Reset timer switch agar tidak trigger.
+  Auth: Bearer Token
+  Body (JSON): { "device_id": "string" } (optional)
+
+4. TRIGGER MANAGEMENT
+- POST /api/switch/<id>/triggers
+  Deskripsi: Tambah trigger email.
+  Auth: Bearer Token
+  Body (JSON): { "type": "EMAIL", "target": "email_tujuan@example.com" }
+
+- GET /api/switch/<id>/triggers
+  Deskripsi: List trigger untuk switch tertentu.
+  Auth: Bearer Token
+  Body: None
+
+- PUT /api/switch/triggers/<id>
+  Deskripsi: Update trigger (aktif/nonaktif atau ganti target).
+  Auth: Bearer Token
+  Body (JSON): { "target": "string", "is_enabled": boolean } (semua field optional)
+
+- DELETE /api/switch/triggers/<id>
+  Deskripsi: Hapus trigger.
+  Auth: Bearer Token
+  Body: None
+
+- GET /api/switch/<switch_id>/events
+  Deskripsi: List history event (log) dari sebuah switch.
+  Auth: Bearer Token
+  Body: None
+
+- GET /api/switch/<switch_id>/events/<event_id>
+  Deskripsi: Detail history event tertentu.
+  Auth: Bearer Token
+  Body: None
+
+5. INTERNAL & CRON (/api/internal)
+- POST /api/internal/deadline-check
+  Deskripsi: Worker untuk mengecek switch yang expired (dijalankan via Cron).
+  Auth: Header "X-Cron-Secret"
+  Body: None
+
+- POST /api/internal/test-email
+  Deskripsi: Kirim email percobaan untuk testing SMTP.
+  Auth: Header "X-Cron-Secret"
+  Body (JSON): { "to": "email_tujuan@example.com" }
+
+6. IMPORTANT DATA
+- Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJpYXQiOjE3ODg4MzEyNzAsImV4cCI6MTc4ODkxNzY3MH0.AjIbiKokivY-0F4f2xSLBa4RD_L3rOGotTJG6FVOmPk
+- Cron PxV_YDUTRDSbLt2O0dNx-LziSzsCDbvhVWiSM1HQOOw

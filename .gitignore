@@ -1,0 +1,21 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.iml
+
+# Node / Web / Build
+node_modules/
+dist/
+build/
+.artifacts/
+
+# Python / Virtualenv
+__pycache__/
+*.pyc
+.venv/
+venv/
