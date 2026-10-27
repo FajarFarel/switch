@@ -1,7 +1,6 @@
 
 import 'package:go_router/go_router.dart';
 import '../features/auth/login_page.dart';
-import '../features/auth/register_page.dart';
 import '../features/dashboard/dashboard_page.dart';
 import '../features/events/event_list_page.dart';
 import '../features/splash/splash_page.dart';
@@ -25,10 +24,6 @@ class AppRoutes {
       GoRoute(
         path: login,
         builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: register,
-        builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: dashboard,
