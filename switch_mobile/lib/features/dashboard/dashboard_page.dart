@@ -5,6 +5,7 @@ import '../../app/routes.dart';
 import '../auth/auth_controller.dart';
 import '../switches/switch_controller.dart';
 import '../../models/switch_model.dart';
+import '../../app/colors.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -40,7 +41,8 @@ class _DashboardPageState extends State<DashboardPage> {
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Nama Switch'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Wajib diisi' : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -51,20 +53,24 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 validator: (v) =>
                     v == null || int.tryParse(v) == null || int.parse(v) <= 0
-                        ? 'Harus angka > 0'
-                        : null,
+                    ? 'Harus angka > 0'
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: graceController,
                 keyboardType: TextInputType.number,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                ),
                 decoration: const InputDecoration(
                   labelText: 'Grace Period (menit)',
                 ),
                 validator: (v) =>
                     v == null || int.tryParse(v) == null || int.parse(v) <= 0
-                        ? 'Harus angka > 0'
-                        : null,
+                    ? 'Harus angka > 0'
+                    : null,
               ),
             ],
           ),
@@ -112,6 +118,8 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'EXPIRED':
       case 'TRIGGERED':
         return Colors.red;
+      case 'GRACE':
+        return Colors.yellow;
       case 'DISARMED':
       default:
         return Colors.grey;
@@ -125,28 +133,64 @@ class _DashboardPageState extends State<DashboardPage> {
     final user = authController.currentUser;
 
     return Scaffold(
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
+        backgroundColor: AppColors.panelRaised,
+        foregroundColor: AppColors.text,
+        elevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Dead Man's Switch", style: TextStyle(fontSize: 18)),
+            const Text(
+              "Andhika's Switch",
+              style: TextStyle(
+                fontSize: 18,
+                color: AppColors.text,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (user != null)
               Text(
                 'Halo, ${user.username}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  color: AppColors.textMuted,
+                ),
               ),
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Keluar',
-            onPressed: () async {
-              await authController.logout();
-              if (context.mounted) {
-                context.go(AppRoutes.login);
-              }
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () async {
+                await authController.logout();
+                if (context.mounted) {
+                  context.go(AppRoutes.login);
+                }
+              },
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.redDim, width: 1),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/logoutrounded.png',
+                    width: 34,
+                    height: 34,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -155,34 +199,79 @@ class _DashboardPageState extends State<DashboardPage> {
         child: switchController.isLoading && switchController.switches.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : switchController.switches.isEmpty
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 100),
-                      Center(
-                        child: Text(
-                          'Belum ada switch.\nTekan tombol + untuk membuat.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
-                        ),
-                      ),
-                    ],
-                  )
-                : ListView.builder(
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 100),
+                  Center(
+                    child: Text(
+                      'Belum ada switch.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                    ),
+                  ),
+                ],
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+
+                  final crossAxisCount = width >= 900
+                      ? 4
+                      : width >= 600
+                      ? 3
+                      : width >= 350
+                      ? 2
+                      : 1;
+
+                  return GridView.builder(
                     padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1,
+                    ),
                     itemCount: switchController.switches.length,
                     itemBuilder: (context, index) {
                       final item = switchController.switches[index];
                       return _buildSwitchCard(context, item, switchController);
                     },
-                  ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateSwitchDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Buat Switch'),
+                  );
+                },
+              ),
       ),
     );
+  }
+
+  String _getRemainingTime(dynamic deadline) {
+    if (deadline == null) return '--';
+
+    final date = DateTime.tryParse(deadline.toString());
+    if (date == null) return '--';
+
+    final remaining = date.difference(DateTime.now());
+
+    if (remaining.isNegative || remaining.inSeconds == 0) {
+      return 'Waktu habis';
+    }
+
+    final days = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
+
+    if (days > 0) {
+      return '${days}h ${hours}j';
+    }
+    if (remaining.inHours > 0) {
+      return '${remaining.inHours}j ${minutes}m';
+    }
+    if (remaining.inMinutes > 0) {
+      return '${remaining.inMinutes}m ${seconds}d';
+    }
+
+    return '${seconds} detik';
   }
 
   Widget _buildSwitchCard(
@@ -193,127 +282,294 @@ class _DashboardPageState extends State<DashboardPage> {
     final statusColor = _getStatusColor(item.status);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: AppColors.panel,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: AppColors.border, width: 1),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _showSwitchPopup(context, item, controller),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
                 item.name,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: statusColor),
-              ),
-              child: Text(
-                item.status,
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
                 ),
               ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 6),
-            Text('Interval: ${item.checkinInterval}m | Grace: ${item.gracePeriod}m'),
-            if (item.nextDeadlineAt != null)
+              const SizedBox(height: 8),
+
               Text(
-                'Deadline: ${item.nextDeadlineAt}',
-                style: const TextStyle(fontSize: 12, color: Colors.deepOrange),
+                'Sisa waktu',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                if (item.status == 'DISARMED')
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    icon: const Icon(Icons.power_settings_new, size: 16),
-                    label: const Text('ARM'),
-                    onPressed: () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      final ok = await controller.armSwitch(item.id);
-                      if (!mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Switch diaktifkan'
-                                : (controller.errorMessage ?? 'Gagal'),
-                          ),
-                        ),
-                      );
-                    },
+              const SizedBox(height: 3),
+
+              Text(
+                _getRemainingTime(item.nextDeadlineAt),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, color: AppColors.text),
+              ),
+              const SizedBox(height: 12),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusColor),
+                ),
+                child: Text(
+                  item.status,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                if (item.status == 'ARMED') ...[
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    icon: const Icon(Icons.check_circle_outline, size: 16),
-                    label: const Text('Check-in'),
-                    onPressed: () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      final ok = await controller.checkinSwitch(item.id);
-                      if (!mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Check-in berhasil'
-                                : (controller.errorMessage ?? 'Gagal'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSwitchPopup(
+    BuildContext context,
+    SwitchModel item,
+    SwitchController controller,
+  ) {
+    final statusColor = _getStatusColor(item.status);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: AppColors.panel,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.border),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.text,
                           ),
                         ),
-                      );
-                    },
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        icon: const Icon(
+                          Icons.close,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'Deskripsi',
+                    style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'Switch keamanan untuk memantau check-in '
+                    'secara berkala.',
+                    style: const TextStyle(fontSize: 14, color: AppColors.text),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.panelRaised,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    icon: const Icon(Icons.stop_circle_outlined, size: 16),
-                    label: const Text('Disarm'),
-                    onPressed: () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      final ok = await controller.disarmSwitch(item.id);
-                      if (!mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Switch dimatikan'
-                                : (controller.errorMessage ?? 'Gagal'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Status',
+                                style: TextStyle(
+                                  color: AppColors.textMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: statusColor),
+                              ),
+                              child: Text(
+                                item.status,
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        const Text(
+                          'Sisa waktu',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
                           ),
                         ),
-                      );
-                    },
+                        const SizedBox(height: 5),
+
+                        Text(
+                          _getRemainingTime(item.nextDeadlineAt),
+                          style: const TextStyle(
+                            color: AppColors.text,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        _popupInfoRow(
+                          'Waktu interval',
+                          '${item.checkinInterval} menit',
+                        ),
+                        const SizedBox(height: 12),
+                        _popupInfoRow(
+                          'Grace period',
+                          '${item.gracePeriod} menit',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: item.status.toUpperCase() != 'ARMED'
+                          ? null
+                          : () async {
+                              final messenger = ScaffoldMessenger.of(context);
+
+                              final ok = await controller.checkinSwitch(
+                                item.id,
+                              );
+
+                              if (!mounted) return;
+
+                              if (dialogContext.mounted) {
+                                Navigator.pop(dialogContext);
+                              }
+
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? 'Waktu switch berhasil direset'
+                                        : (controller.errorMessage ??
+                                              'Gagal mereset waktu'),
+                                  ),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Reset'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.red,
+                        foregroundColor: AppColors.text,
+                        disabledBackgroundColor: AppColors.panelRaised,
+                        disabledForegroundColor: AppColors.textDim,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-              ],
+              ),
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _popupInfoRow(String label, String value) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
         ),
-        onTap: () => context.push('/switch/${item.id}'),
-      ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppColors.text,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

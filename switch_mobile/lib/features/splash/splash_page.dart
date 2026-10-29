@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../app/routes.dart';
 import '../auth/auth_controller.dart';
+import 'package:switch_mobile/app/colors.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -34,16 +35,24 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bg,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.shield_outlined, size: 80, color: Colors.deepOrange),
+          children: [
+            Image.asset(
+              'assets/logobg.png',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.apps_rounded, size: 42),
+            ),
             SizedBox(height: 24),
             Text(
-              "DEAD MAN'S SWITCH",
+              "ANDHIKA'S SWITCH",
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 35,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
               ),

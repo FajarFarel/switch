@@ -17,6 +17,8 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  bool _isPasswordVisible = false;
+
   @override
   void dispose() {
     _emailController.dispose();
