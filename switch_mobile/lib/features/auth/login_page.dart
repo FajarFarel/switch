@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:switch_mobile/app/colors.dart';
 import '../../app/routes.dart';
 import 'auth_controller.dart';
 
@@ -42,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authController.errorMessage ?? 'Login gagal'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.red,
         ),
       );
     }
@@ -53,6 +54,7 @@ class _LoginPageState extends State<LoginPage> {
     final authController = context.watch<AuthController>();
 
     return Scaffold(
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -215,14 +217,37 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _loginInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+      prefixIcon: Icon(icon, color: AppColors.textMuted, size: 19),
+      filled: true,
+      fillColor: AppColors.panel2,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: const BorderSide(color: AppColors.text, width: 1.3),
       ),
     );
   }
