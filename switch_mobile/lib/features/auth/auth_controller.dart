@@ -11,6 +11,7 @@ class AuthController extends ChangeNotifier {
   UserModel? _currentUser;
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _isPasswordVisible = false;
   String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;
